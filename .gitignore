@@ -1,1 +1,15 @@
+# --- 忽略大文件 ---
+*.h5
 *.hdf5
+*.pth
+*.ckpt
+*.weights
+
+# --- 忽略缓存和系统文件 ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# --- (可选) 如果你不想上传生成的图片，把下面这行也加上 ---
+# *.png

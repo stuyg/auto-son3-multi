@@ -45,27 +45,25 @@ class RadioMLSequence(tf.keras.utils.Sequence):
         # =================================================
         if self.mode == 'binary':
             # 1. 创建标签容器 (Batch, 2) -> [Noise, Signal]
-            # 初始化全为 Signal [0, 1]
             Y_new = np.zeros((current_batch_size, 2), dtype=np.float32)
             Y_new[:, 1] = 1.0 
             
             # 2. 将 Batch 的一半替换为纯噪声
-            # 比如前一半是信号，后一半改为噪声
             noise_count = current_batch_size // 2
             
             if noise_count > 0:
-                # 生成高斯白噪声 (均值0，方差1，也就是 0dB 左右的噪声功率，具体可视数据集归一化情况调整)
-                # 形状与 X_batch 一致
-                noise_data = np.random.normal(0, 1.0, size=(noise_count, X_batch.shape[1], X_batch.shape[2]))
+                # 【关键修改】计算当前 Batch 信号的平均标准差（幅度）
+                # 这样生成的噪声强度就会和信号（或信号里的背景噪声）在同一个量级
+                batch_std = np.std(X_batch)
                 
-                # 替换后半部分数据
+                # 使用计算出的 std 生成噪声，而不是默认的 1.0
+                noise_data = np.random.normal(0, batch_std, size=(noise_count, X_batch.shape[1], X_batch.shape[2]))
+                
                 X_batch[-noise_count:] = noise_data
                 
-                # 修改标签为 Noise [1, 0]
                 Y_new[-noise_count:, 0] = 1.0
                 Y_new[-noise_count:, 1] = 0.0
                 
-                # 修改 SNR 记录 (噪声的 SNR 设为 -100 或其他标记值)
                 Z_batch[-noise_count:] = -100
 
             Y_batch = Y_new
